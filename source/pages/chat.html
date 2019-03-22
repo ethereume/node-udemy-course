@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Hello</title>
+</head>
+<body>
+<div>
+	<p>Chat Application</p>
+		<section id="mesage-form">
+			
+		</section>
+	<div>
+		<input  type="text" name="messege" placeholder="Proszę podaj wiadomość">
+		<button id="message">Wyślij</button>
+	</div>
+	<div>
+		<br/>
+		<button id="geolocation">Udostępnij lokalizację</button>
+	</div>
+</div>
+
+<script id="message-template" type="text/tempalte">
+	<div>
+		<p>{{{mess}}} created Time is {{{time}}}</p>
+	</div>
+</script>
+<script id="link-template" type="text/tempalte">
+	<div>
+		<a href="{{url}}" target="_blank">{{link}} - {{time}}</a>
+	</div>
+</script>
+
+<script src="/socket.io/socket.io.js" type="text/javascript"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mustache.js/3.0.1/mustache.js" type="text/javascript"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qs/6.6.0/qs.min.js" type="text/javascript"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js" type="text/javascript"></script>
+<script type="text/javascript">
+
+	const $message = document.querySelector("#mesage-form");
+	const messageTemplate = document.querySelector("#message-template").innerHTML;
+	const urlTemplate = document.querySelector("#link-template").innerHTML;
+
+
+
+	//options qs
+
+	const {username,room} = Qs.parse(location.search,{
+		ignoreQueryPrefix:true
+	});
+
+
+	const socket = io();
+
+
+	socket.emit('join',{username,room});
+	
+	socket.on("welkome",(dane)=>{
+		const html = Mustache.render(messageTemplate,{
+			mess:dane.text,
+			time:moment(dane.createAt).format("hh:mm a")
+		})
+		$message.innerHTML+=html;
+	});
+	socket.on("forAll",(dane)=>{
+		document.querySelector("#geolocation").disabled =false;
+		const html = Mustache.render(messageTemplate,{
+			mess:dane.text,
+			time:moment(dane.createAt).format("hh:mm a")
+		})
+		$message.innerHTML+=html;
+
+	});
+	document.querySelector("#message").addEventListener('click',(e)=>{
+
+		socket.emit("message",document.querySelector("input[type=text]").value);
+		document.querySelector("input[type=text]").value = "";
+		document.querySelector("input[type=text]").focus();	
+		//socket.emit("message",document.getElementsByName("messege")[0].value);
+	},false);
+
+
+	socket.on("sheringLocation",(dane)=>{
+		document.querySelector("#geolocation").disabled =false;
+		const messaga = Mustache.render(urlTemplate,{
+			url:dane.url,
+			time:moment(dane.time).format("hh:mm a"),
+			link:'Shared location'
+
+		});
+		console.log(messaga);
+		$message.insertAdjacentHTML("beforeend",messaga);
+	})
+
+	document.querySelector("#geolocation").addEventListener('click',() => {
+		if(navigator.geolocation !== undefined){
+
+			navigator.geolocation.getCurrentPosition((position)=>{
+				if(position.coords){
+					document.querySelector("#geolocation").disabled = true
+					setTimeout(()=>{
+						socket.emit("sendLocation",{
+							latitude:position.coords.latitude,
+							longitude:position.coords.longitude
+						},(message)=>{
+							console.log(message);	
+						});
+					},2000);
+				}
+			});
+
+		} else {
+			alert('Geolocation is not supported');
+		}
+	},false);
+
+</script>
+</body>
+</html>
