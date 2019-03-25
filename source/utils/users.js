@@ -36,16 +36,28 @@ const removeUser = (id) => {
 	}
 };
 
-const getUser = () => {
-
+const getUser = (id) => {
+	if(id){
+		return user.find(user=>user.id === id);
+	} else {
+		return {
+			error:'Id is required!'
+		}
+	}
 };
-getUserName = () => {
-
+getUsersInRomm = (room) => {
+	if(room) {
+		return user.filter(user=>user.room === room);
+	}else {
+		return {
+			error:'Room is required!'
+		}
+	}
 };
 
 module.exports = {
 	addUser,
 	removeUser,
 	getUser,
-	getUserName
+	getUserInRomm
 }
