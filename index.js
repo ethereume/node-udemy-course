@@ -29,18 +29,23 @@ let count = 0;
 io.on("connection",(socket)=>{
 
 	socket.on("message",(dane)=>{
-		if(filter.isProfane(dane)){
-			
-		} else {
-			io.emit("forAll",timeStamp(dane));
-		}
+		const {user,error} = getUser(socket.id);
+		if(user) {
+			if(filter.isProfane(dane)){} else {
+				io.to(user.room).emit("forAll",timeStamp(dane));
+			}
+		} 
 	});
 	socket.on("sendLocation",(dane,callback)=>{
-			if(dane) {
+			const {user,error} = getUser(socket.id);
+			if(dane && user) {
 				callback(`https://google.com/maps?q=${dane.latitude},${dane.longitude}`);
-				io.emit("sheringLocation",{url:`https://google.com/maps?q=${dane.latitude},${dane.longitude}`,time:new Date().getTime()});
+				io.to(user.room).emit("sheringLocation",{url:`https://google.com/maps?q=${dane.latitude},${dane.longitude}`,time:new Date().getTime()});
 			} else {
 				callback('Jakis nieokreślony bląd');
+			}
+			if(error){
+				callback(error);
 			}
 	});
 	socket.on("disconnect",()=>{
@@ -59,12 +64,12 @@ io.on("connection",(socket)=>{
 		socket.broadcast.to(user.room).emit('welkome',timeStamp(`Dołaczył uzytkownik ${user.username}`));
 		cb();
 
-		//socket.emit -> emituje zdarzenie tylko to podlączonego klienta
-		//io.emit -> emituje zdarzenia do wszsytkich 
-		//socket.broadcast.emit -> emituje zdarzenia do wszsytkich oprócz do siebie samego
+		//socket.emit -> emituje zdarzenie tylko do siebie 
+		//io.emit -> emituje zdarzenia do wszystkich 
+		//socket.broadcast.emit -> emituje zdarzenia do wszystkich oprócz siebie 
 
-		//io.to.emit -> emit events to enybody to the specyfic room	
-		//socket.broadcast.to.emit -> sending events to the client exepts yourself and to the specyfic room
+		//io.to().emit -> emituje zdarzenia do wszystkich w specyficznym pokoju
+		//socket.broadcast.to().emit -> emituje zdarzenie do wszystkich w specyficznym pokoju oprócz siebie
 	});
 });
 
