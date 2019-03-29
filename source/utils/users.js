@@ -1,5 +1,4 @@
 const user = [];
-
 const addUser = (id,userName,room) => {
 	userName = userName.trim().toLowerCase();
 	room = room.trim().toLowerCase();
@@ -25,7 +24,6 @@ const addUser = (id,userName,room) => {
 		}
 	}
 };
-
 const removeUser = (id) => {
 	const index = user.findIndex(user=>user.id === id);
 	if(index !== -1){
@@ -35,7 +33,6 @@ const removeUser = (id) => {
 			]
 	}
 };
-
 const getUser = (id) => {
 	if(id){
 		return user.find(user=>user.id === id);
@@ -54,10 +51,9 @@ getUsersInRomm = (room) => {
 		}
 	}
 };
-
 module.exports = {
 	addUser,
 	removeUser,
 	getUser,
-	getUserInRomm
+	getUsersInRomm
 }

@@ -52,7 +52,14 @@
 	const socket = io();
 
 
-	socket.emit('join',{username,room});
+	socket.emit('join',{username,room},(error)=>{
+		if(error) {
+			alert(error);
+			location.href="/";
+		} else {
+			$message.insertAdjacentHTML("beforeend","You have been added to room");
+		}
+	});
 	
 	socket.on("welkome",(dane)=>{
 		const html = Mustache.render(messageTemplate,{

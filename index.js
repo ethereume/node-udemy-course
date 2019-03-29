@@ -3,7 +3,7 @@ const http = require('http');
 const path = require("path");
 const socket = require("socket.io");
 const Filter = require('bad-words');
-
+const {	addUser,removeUser,getUser,getUserInRomm} = require("./source/utils/users");
 
 const filter = new Filter();
 const app = express();
@@ -44,12 +44,20 @@ io.on("connection",(socket)=>{
 			}
 	});
 	socket.on("disconnect",()=>{
-		io.emit("forAll",timeStamp('User has left'));
+		const user = removeUser(socket.id);
+		if(user) {
+			io.to(user.room).emit("forAll",timeStamp(`${user.username} has left`));
+		}
 	});
-	socket.on("join",({username,room})=>{
-		socket.join(room);
+	socket.on("join",({username,room},cb)=>{
+		const {user, error} = addUser(socket.id,username,room);
+		if(error) {
+			return cb(error);
+		}
+		socket.join(user.room);
 		socket.emit('welkome',timeStamp('Welkome'));
-		socket.broadcast.to(room).emit('welkome',timeStamp(`Dołaczył uzytkownik ${username}`));
+		socket.broadcast.to(user.room).emit('welkome',timeStamp(`Dołaczył uzytkownik ${user.username}`));
+		cb();
 
 		//socket.emit -> emituje zdarzenie tylko to podlączonego klienta
 		//io.emit -> emituje zdarzenia do wszsytkich 
